@@ -25,7 +25,7 @@ function parseArgs(args) {
         if(keyVal.length == 1) {
             keyVal[1] = '';
         }
-        obj[decodeURIComponent(keyVal[0])] = decodeURIComponent(keyVal[1]);
+        obj[window.decodeURIComponent(keyVal[0])] = window.decodeURIComponent(keyVal[1]);
     });
     return obj;
 }
@@ -56,12 +56,12 @@ const dropbox = {
     name: 'Dropbox',
     noAccount: {token:null, id:null, name:null},
     _send(url, account, params = null) {
-        return this._sendImpl(url, {
+        return this._sendImpl(url +
+            '?authorization='+window.encodeURIComponent('Bearer '+account.token) +
+            '&reject_cors_preflight=true', {
             method: 'POST',
             headers: {
-                'User-Agent': 'pic-2-cloud',
-                'Authorization': 'Bearer '+account.token,
-                'Content-Type': 'application/json',
+                'Content-Type': 'text/plain; charset=dropbox-cors-hack',
             },
             body: JSON.stringify(params),
         });
