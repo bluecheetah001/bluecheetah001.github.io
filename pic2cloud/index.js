@@ -54,7 +54,6 @@ class ApiError extends Error {
 
 const dropbox = {
     name: 'Dropbox',
-    noAccount: {token:null, id:null, name:null},
     _send(url, account, params = null) {
         return this._sendImpl(url +
             '?authorization='+window.encodeURIComponent('Bearer '+account.token) +
@@ -107,6 +106,12 @@ const dropbox = {
                             reasonText = response.text();
                         }
                         console.log(`Retrying ${url} in ${wait}s (${reasonText})`);
+                        gtag('event', 'retry', {
+                            event_category: 'api',
+                            event_label: this.name,
+                            value: wait,
+                            non_interaction: true,
+                        });
                         window.setTimeout(() => {
                             resolve(this._sendImpl(url, init));
                         }, 1000*wait);
@@ -150,25 +155,25 @@ const dropbox = {
                                 console.log('invalid token ', error.response);
                                 // fallthough
                             case EXPIRED_TOKEN:
-                                resolve(this.noAccount);
+                                resolve(null);
                                 return;
                         }
-                        error.source = 'getLogin';
                         reject(error);
                     });
             } else {
-                resolve(this.noAccount);
+                resolve(null);
             }
-        }).then((response) => {
-            if(response.token) {
-                window.localStorage.dropboxAccessToken = response.token;
+        }).then((account) => {
+            if(account) {
+                window.localStorage.dropboxAccessToken = account.token;
             } else {
                 delete window.localStorage.dropboxAccessToken;
             }
             fixUrl();
-            return response;
+            return account;
         }, (error) => {
             delete window.localStorage.dropboxAccessToken;
+            fixUrl();
             throw error;
         });
     },
@@ -178,19 +183,19 @@ const dropbox = {
 
         const splitFragment = window.location.href.split('#');
 
-        window.location.href = 'https://www.dropbox.com/oauth2/authorize'
-            + '?response_type=token'
-            + '&client_id=y5xzv1dv09k6swz'
-            + '&force_reauthentication='+logout
-            + '&redirect_uri='+encodeURIComponent('https://bluecheetah001.github.io/pic2cloud/')
-            + '&state='+state;
+        window.location.href = 'https://www.dropbox.com/oauth2/authorize' +
+            '?response_type=token' +
+            '&client_id=y5xzv1dv09k6swz' +
+            '&force_reauthentication='+logout +
+            '&redirect_uri='+encodeURIComponent('https://bluecheetah001.github.io/pic2cloud/') +
+            '&state='+state;
     },
 }
 
 class OauthComponent extends Component {
     constructor(props) {
         super(props);
-        this.state.account = {};
+        this.state.account = null;
         props.api.getLogin()
             .then((account) => {
                 this.setState({account});
@@ -200,20 +205,30 @@ class OauthComponent extends Component {
             });
     }
     render({api}, {account}) {
-
-        if(account.token) {
-            return h('div', null,
-                'Logged in as '+account.name,
-                h('br'),
-                h('button', {onClick:api.openLoginPage.bind(api, true)}, 'Change '+api.name+' login')
-            );
+        let stateText = null;
+        let buttonText = null;
+        let logout = false;
+        if(account) {
+            stateText = 'Logged in as '+account.name;
+            buttonText = 'Change '+api.name+' login';
+            logout = true;
         } else {
-            return h('div', null,
-                'Not logged in',
-                h('br'),
-                h('button', {onClick:api.openLoginPage.bind(api, false)}, 'Login to '+api.name)
-            );
+            stateText = 'Not logged in';
+            buttonText = 'Login to '+api.name;
+            logout = false;
         }
+        return h('div', null,
+            stateText,
+            h('br'),
+            h('button', {onClick:this._doLogin.bind(this, api, logout)}, buttonText)
+        );
+    }
+    _doLogin(api, logout) {
+        gtag('event', 'login', {
+            event_category: 'engagement',
+            event_label: api.name,
+        });
+        api.openLoginPage(logout);
     }
 }
 
