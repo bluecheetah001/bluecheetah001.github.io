@@ -2,7 +2,7 @@ const {h, render, Component} = window.preact;
 
 function wipeLocalStorage() {
     window.localStorage.clear();
-    window.location.replace("https://bluecheetah001.github.io/pic2cloud");
+    window.location.replace('https://bluecheetah001.github.io/pic2cloud/');
 }
 
 const base64urlChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -32,7 +32,7 @@ function parseArgs(args) {
 
 function fixUrl() {
     // TODO add fragment for service and path
-    window.history.replaceState(null, document.title, "https://bluecheetah001.github.io/pic2cloud");
+    window.history.replaceState(null, document.title, 'https://bluecheetah001.github.io/pic2cloud/');
 }
 
 const BAD_PARAM = 'BAD_PARAM';
@@ -139,7 +139,7 @@ const dropbox = {
             }
 
             if(token) {
-                this._send('https://api.dropboxapi.com/2/users/get_current_account', {token}, null)
+                this._send('https://api.dropboxapi.com/2/users/get_current_account', {token})
                     .then((response) => {
                         const id = response.account_id;
                         const name = response.name.display_name;
@@ -182,7 +182,7 @@ const dropbox = {
             + '?response_type=token'
             + '&client_id=y5xzv1dv09k6swz'
             + '&force_reauthentication='+logout
-            + '&redirect_uri='+encodeURIComponent('https://bluecheetah001.github.io/pic2cloud')
+            + '&redirect_uri='+encodeURIComponent('https://bluecheetah001.github.io/pic2cloud/')
             + '&state='+state;
     },
 }
